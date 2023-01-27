@@ -14,7 +14,8 @@ let ravens = [],
   explosions = [],
   timeToNextEvent = 0,
   lastTime = 0,
-  eventThreshold = 500;
+  eventThreshold = 500,
+  gameOver = false;
 canvasPosition = canvas.getBoundingClientRect();
 collisionCanvasPosition = collisionCanvas.getBoundingClientRect();
 SCORE = 0;
@@ -29,7 +30,7 @@ class Raven {
     this.height = this.image.height * this.speedModifier;
     this.x = canvas.width;
     this.y = Math.random() * (canvas.height - this.height);
-    this.speedX = Math.random() * 1 + 0;
+    this.speedX = Math.random() * 5 + 3;
     this.speedY = Math.random() * 5 - 2.5;
     this.currentFrame = 0;
     this.isMarkedForDeletion = false;
@@ -50,6 +51,10 @@ class Raven {
       ")";
   }
   update(deltaTime) {
+    if (this.x + this.frameWidth < 0) {
+      this.isMarkedForDeletion = true;
+      gameOver = true;
+    }
     collisionCanvasContext.clearRect(
       0,
       0,
@@ -60,9 +65,6 @@ class Raven {
     this.y -= this.speedY;
     if (this.y + this.height > canvas.height || this.y < 0) {
       this.speedY *= -1;
-    }
-    if (this.x + this.frameWidth < 0) {
-      this.isMarkedForDeletion = true;
     }
     this.timeSinceLastFlapAccumulator += deltaTime;
     if (this.timeSinceLastFlapAccumulator > this.flapInterval) {
@@ -132,6 +134,16 @@ const drawScore = (score) => {
   context.fillStyle = "white";
   context.fillText("Score :" + score, 55, 80);
 };
+const drawGameOver = () => {
+  context.fillStyle = "black";
+  context.textAlign = "center";
+  context.fillText(" GAME OVER", canvas.width / 2, canvas.height / 2);
+  context.fillText(
+    " Score: " + SCORE,
+    canvas.width / 2,
+    canvas.height / 2 + 50
+  );
+};
 canvas.addEventListener("click", (e) => {
   const detectPixelColor = collisionCanvasContext.getImageData(e.x, e.y, 1, 1);
   const pixelColor = detectPixelColor.data;
@@ -164,6 +176,13 @@ const animationLogic = (timestamp) => {
 };
 const animate = (timestamp) => {
   animationLogic(timestamp);
-  requestAnimationFrame(animate);
+  if (!gameOver) {
+    requestAnimationFrame(animate);
+  } else {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    ravens = [];
+    explosions = [];
+    drawGameOver();
+  }
 };
 animate(0);
