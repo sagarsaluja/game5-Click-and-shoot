@@ -28,3 +28,5 @@
 //give each object a unique  random color. If the color you clicked on matches the color for "that" object , its a collision
 
 //set opacity to 0 on canvas 2 so colors aren't visible.
+
+//PARTICLE EFFECTS:
