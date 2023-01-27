@@ -222,6 +222,7 @@ const animate = (timestamp) => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     ravens = [];
     explosions = [];
+    particles = [];
     drawGameOver();
   }
 };
