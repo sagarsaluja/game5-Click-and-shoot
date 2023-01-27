@@ -12,6 +12,7 @@ collisionCanvas.height = window.innerHeight;
 context.font = "50px impact";
 let ravens = [],
   explosions = [],
+  particles = [],
   timeToNextEvent = 0,
   lastTime = 0,
   eventThreshold = 500,
@@ -19,6 +20,36 @@ let ravens = [],
 canvasPosition = canvas.getBoundingClientRect();
 collisionCanvasPosition = collisionCanvas.getBoundingClientRect();
 SCORE = 0;
+class Particle {
+  constructor(x, y, size, color) {
+    this.size = size;
+    this.x = x + this.size;
+    this.y = y + this.size * 0.1;
+    this.color = color;
+    this.isMarkedForDeletion = false;
+    this.speedX = Math.random() + 0.5;
+    this.radius = Math.random() * this.size * 0.1; //radius of particle depends on size of raven
+    this.maxRadius = Math.random() * 20 + 30; //radius will grow over time
+    this.timeSinceLastRadiusChange = 0;
+    this.interval = Math.random() * 50 + 50;
+  }
+  update() {
+    this.x += this.speedX;
+    this.radius += 0.6;
+    if (this.radius > this.maxRadius - 5) {
+      this.isMarkedForDeletion = true;
+    }
+  }
+  draw() {
+    context.save();
+    context.globalAlpha = 1 - this.radius / this.maxRadius;
+    context.beginPath(); //find out what this is
+    context.fillStyle = this.color;
+    context.arc(this.x, this.y, this.radius, 0, Math.PI * 2); //for drawing an arc
+    context.fill();
+    context.restore();
+  }
+}
 class Raven {
   constructor() {
     this.image = new Image();
@@ -54,6 +85,7 @@ class Raven {
     if (this.x + this.frameWidth < 0) {
       this.isMarkedForDeletion = true;
       gameOver = true;
+      return;
     }
     collisionCanvasContext.clearRect(
       0,
@@ -70,6 +102,10 @@ class Raven {
     if (this.timeSinceLastFlapAccumulator > this.flapInterval) {
       this.currentFrame++;
       this.timeSinceLastFlapAccumulator = 0;
+
+      [1, 2, 3].forEach(() => {
+        particles.push(new Particle(this.x, this.y, this.width, this.color));
+      });
     }
     if (this.currentFrame > 5) this.currentFrame = 0;
   }
@@ -161,6 +197,7 @@ canvas.addEventListener("click", (e) => {
 });
 const animationLogic = (timestamp) => {
   context.clearRect(0, 0, canvas.width, canvas.height);
+  collisionCanvasContext.clearRect(0, 0, canvas.width, canvas.height);
   let deltaTime = timestamp - lastTime;
   lastTime = timestamp;
   timeToNextEvent += deltaTime;
@@ -169,10 +206,13 @@ const animationLogic = (timestamp) => {
     timeToNextEvent = 0;
   }
   drawScore(SCORE);
-  [...ravens, ...explosions].forEach((object) => object.update(deltaTime));
-  [...ravens, ...explosions].forEach((object) => object.draw());
+  [...particles, ...ravens, ...explosions].forEach((object) =>
+    object.update(deltaTime)
+  );
+  [...particles, ...ravens, ...explosions].forEach((object) => object.draw());
   ravens = ravens.filter((obj) => !obj.isMarkedForDeletion);
   explosions = explosions.filter((obj) => !obj.isMarkedForDeletion);
+  particles = particles.filter((obj) => !obj.isMarkedForDeletion);
 };
 const animate = (timestamp) => {
   animationLogic(timestamp);
