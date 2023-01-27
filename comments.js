@@ -17,3 +17,14 @@
 
 //use the getImageData function : it takes the coordinates , and the area we want to scan
 //using this we can detect the pixel color
+
+//it gives a U Int 8 Clamped Array???
+
+//its data property gives rgba value : r g b alpha
+
+//we will setup a new collision canvas
+//main logic:
+
+//give each object a unique  random color. If the color you clicked on matches the color for "that" object , its a collision
+
+//set opacity to 0 on canvas 2 so colors aren't visible.
