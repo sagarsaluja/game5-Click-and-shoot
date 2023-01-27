@@ -11,9 +11,12 @@ collisionCanvas.height = window.innerHeight;
 
 context.font = "50px impact";
 let ravens = [],
+  explosions = [],
   timeToNextEvent = 0,
   lastTime = 0,
   eventThreshold = 500;
+canvasPosition = canvas.getBoundingClientRect();
+collisionCanvasPosition = collisionCanvas.getBoundingClientRect();
 SCORE = 0;
 class Raven {
   constructor() {
@@ -26,7 +29,7 @@ class Raven {
     this.height = this.image.height * this.speedModifier;
     this.x = canvas.width;
     this.y = Math.random() * (canvas.height - this.height);
-    this.speedX = Math.random() * 5 + 3;
+    this.speedX = Math.random() * 1 + 0;
     this.speedY = Math.random() * 5 - 2.5;
     this.currentFrame = 0;
     this.isMarkedForDeletion = false;
@@ -84,6 +87,45 @@ class Raven {
     );
   }
 }
+class Explosion {
+  constructor(x, y) {
+    this.image = new Image();
+    this.image.src = "Assets/boom.png";
+    this.width = this.image.width / 5;
+    this.height = this.image.height;
+    this.currentFrame = 0;
+    this.isMarkedForDeletion = false;
+    this.timeSinceLastExplosion = 0;
+    this.interval = 100;
+    this.audio = new Audio();
+    this.audio.src = "Assets/Ice Attack.wav";
+    this.x = x - this.width * 0.5 - collisionCanvasPosition.left;
+    this.y = y - this.height * 0.5 - collisionCanvasPosition.top;
+  }
+  update(deltaTime) {
+    if (this.currentFrame === 0) this.audio.play();
+    if (this.currentFrame > 4) this.isMarkedForDeletion = true;
+    this.timeSinceLastExplosion += deltaTime;
+    if (this.timeSinceLastExplosion > this.interval) {
+      this.currentFrame++;
+      this.timeSinceLastExplosion = 0;
+    }
+    if (this.currentFrame > 5) this.currentFrame = 0;
+  }
+  draw() {
+    context.drawImage(
+      this.image,
+      this.currentFrame * this.width,
+      0,
+      this.width,
+      this.height,
+      this.x,
+      this.y,
+      this.width,
+      this.height
+    );
+  }
+}
 const drawScore = (score) => {
   context.fillStyle = "black";
   context.fillText("Score :" + score, 50, 75);
@@ -99,6 +141,7 @@ canvas.addEventListener("click", (e) => {
       raven.randomColors[1] === pixelColor[1] &&
       raven.randomColors[2] === pixelColor[2]
     ) {
+      explosions.push(new Explosion(e.x, e.y));
       raven.isMarkedForDeletion = true;
       SCORE++;
     }
@@ -114,9 +157,10 @@ const animationLogic = (timestamp) => {
     timeToNextEvent = 0;
   }
   drawScore(SCORE);
-  [...ravens].forEach((object) => object.update(deltaTime));
-  [...ravens].forEach((object) => object.draw());
+  [...ravens, ...explosions].forEach((object) => object.update(deltaTime));
+  [...ravens, ...explosions].forEach((object) => object.draw());
   ravens = ravens.filter((obj) => !obj.isMarkedForDeletion);
+  explosions = explosions.filter((obj) => !obj.isMarkedForDeletion);
 };
 const animate = (timestamp) => {
   animationLogic(timestamp);
